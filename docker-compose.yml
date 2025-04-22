@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:14
+    container_name: vipclub-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: vipclub
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile          # ✅ deixa isso explícito
+    container_name: vipclub-backend
+    restart: always
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@vipclub-postgres:5432/vipclub   # ✅ use o nome do serviço como hostname
+    depends_on:
+      - postgres
+    ports:
+      - "3001:3001"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile          # ✅ importante aqui também
+    container_name: vipclub-frontend
+    restart: always
+    environment:
+      NEXT_PUBLIC_API_URL: http://vipclub-backend:3001   # ✅ referência o nome do serviço
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
